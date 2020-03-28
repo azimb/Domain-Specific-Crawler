@@ -1,10 +1,12 @@
 ### Carleton University
-### COMP 4601 : Intelligent Web-based Systems
-### Final project : Domain-specific search engine
+#### COMP 4601 : Intelligent Web-based Systems
+#### Final project : Domain-specific search engine
 
-## Authors: Azim B, Zachary S
 
-#### Description:
+#### Authors: Azim B, Zachary S
+
+
+##### Description:
 
 Build a domain specific search engine that crawls, indexes and presents results for a specific domain (e.g., baseball blogs).
 
