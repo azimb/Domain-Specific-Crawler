@@ -23,7 +23,8 @@ import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
 
 public class BasicCrawlController {
 
-	public static void main(String[] args) throws Exception {
+	//public static void main(String[] args) throws Exception {
+	public static void runCrawl(String topic) throws Exception {	
 		Logger logger = LoggerFactory.getLogger(BasicCrawlController.class);
 
 		COMP4601Store docStore;
@@ -46,8 +47,8 @@ public class BasicCrawlController {
 
 		// You can set the maximum number of pages to crawl. The default value is -1 for
 		// unlimited number of pages.
-//		config.setMaxPagesToFetch(5);
-		config.setMaxPagesToFetch(1000);
+		config.setMaxPagesToFetch(5);
+		//config.setMaxPagesToFetch(1000);
 
 		// Should binary data should also be crawled? example: the contents of pdf, or
 		// the metadata of images etc
@@ -76,7 +77,11 @@ public class BasicCrawlController {
 		// For each crawl, you need to add some seed urls. These are the first
 		// URLs that are fetched and then the crawler starts following links
 		// which are found in these pages
-		controller.addSeed("https://sikaman.dyndns.org:8443/WebSite/rest/site/courses/4601/resources/N-0.html");
+		
+		
+		controller.addSeed("https://en.wikipedia.org/wiki/" + topic);
+		
+		//controller.addSeed("https://sikaman.dyndns.org:8443/WebSite/rest/site/courses/4601/resources/N-0.html");
 		// controller.addSeed("https://sikaman.dyndns.org:8443/WebSite/rest/site/courses/4601/handouts/");
 		// controller.addSeed("https://en.wikipedia.org/wiki/Batman");
 
@@ -85,13 +90,16 @@ public class BasicCrawlController {
 		// speed depends on many other factors as well. You can experiment with this to
 		// figure out what number of
 		// threads works best for you.
-		int numberOfCrawlers = 8;
+		//int numberOfCrawlers = 8;
+		int numberOfCrawlers = 1;
 
 		// Start the crawl. This is a blocking operation, meaning that your code
 		// will reach the line after this only when crawling is finished.
 		// controller.start(factory, numberOfCrawlers);
-		controller.start(BasicCrawler.class, numberOfCrawlers);
+		//controller.start(BasicCrawler.class, numberOfCrawlers);
 
+		controller.start(BasicCrawler.class);
+		
 		Multigraph graph = new Multigraph(DefaultEdge.class);
 		List<Object> crawlersLocalData = controller.getCrawlersLocalData();
 		docStore = COMP4601MongoDB.getInstance();
