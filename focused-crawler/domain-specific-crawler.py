@@ -4,25 +4,52 @@ import requests
 
 import nltk   
 
+import math
+
 from bs4 import BeautifulSoup
 
+from vocab import *
 
 
-class HtmlComponenets:
-	title = ""
-	header = ""
-	paragraphs = []
+'''
+
+# function from the paper (wtu)
+def get_term_weight(unit, doc_vocabulary, ftu):
+	weight = 0.0 # this will be the output
+	 
+	 N = ? # number of feature collections
+	 nt = ? # number of units where term occurs
+	 
 	
-	def __init__(title, header, paragraphs):
-		self.title = title
-		self.header
-		self.paragraphs = paragraphs
+	num = ftu * math.log(N/nt)
+	denom = 0.0
+	for (term, freq) in doc_vocabulary.items():
+		fru = ? # number of times term occurs in the unit/para
+		denom += ((fru* math.log(N/nt))**2)
+	
+	denom = math.sqrt(denom)
+	
+	return num/denom
+	
 
 
-def lre(url_queue, web_page, topic_vector, threshold):
-	block_list = cbp(web_page)
+# input: para as a string
+def make_unit_vector(unit, doc_vocabulary):
+	
+	
+	ftu = ? # freq of term in the unit
+	
+	
+	get_term_weight(unit, doc_vocabulary, ftu)
+
+'''	
+	
+
+def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold):
+	#block_list = cbp(web_page)
+	block_list = retrieve_content_blocks(html)
 	for block in block_list:
-		block_vector = make_block_vector(block)
+		block_vector = make_unit_vector(block, doc_vocabulary)
 		s = similarity_cbp(block_vector, topic_vector)
 		
 		# relavant block (above threshold)
@@ -33,7 +60,7 @@ def lre(url_queue, web_page, topic_vector, threshold):
 		
 		# not enough relavance (below threshold)
 		else:
-			temp_queue = extract_AT_and_LC(web_page)
+			temp_queue = extract_AT_and_LC(html)
 			for link in temp_queue:
 				AT_vector = make_AT_vector(link)
 				LC_vector = make_LC_vector(link)
@@ -43,7 +70,7 @@ def lre(url_queue, web_page, topic_vector, threshold):
 					heapq.heappush(url_queue, (s, link))
 	
 	return url_queue
-				
+		
 				
 '''
 Function: visit the URL, and download HTML
@@ -52,23 +79,10 @@ Parameters:
 Returns: html page
 '''
 def download_html(url):
-	pass
-	'''
-	
-	res = requests.get(url)
-	html_page = res.content
-	
-	
-	'''
+	response = urllib.request.urlopen(url)
+	html = response.read()	
+	return html
 
-	
-'''
-Function: parse HTML to get title, header, and paragraphs
-Returns: HtmlComponenets
-'''	
-def parse_html(html_page): pass
-	
-	
 '''
 Function: to perfor the core crawling
 Parameters:
@@ -85,17 +99,33 @@ def crawl(url_queue):
 	# Step 2: Fetch the HTML of the url
 	html = download_html(url)
 	
-	# Step 2.1: Parse the HTML
-	html_components = parse_html(html)
 	
+	
+	vocabulary = get_vocab(html)
+
+	
+	print("paragraphs")
+	block_list = retrieve_content_blocks(html)
+	for b in block_list:
+		print(b.get_text())
+		print(b.get_text().split())
+		
+		#print(b.getText())
+		print("-----------")
+	
+	
+	'''
 	# TODO -- unknown
 	topic_vector = ?
 	threshold = ?
 	
 	
-	url_queue = lre(url_queue, html, topic_vector, threshold)
+	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
 	crawl(url_queue)
+	'''
 	
+	
+
 
 
 
