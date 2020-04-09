@@ -5,10 +5,12 @@ import requests
 import nltk   
 
 import math
+import numpy as np
 
 from bs4 import BeautifulSoup
 
 from vocab import *
+from gensim.models import Word2Vec, KeyedVectors
 
 
 '''
@@ -43,8 +45,64 @@ def make_unit_vector(unit, doc_vocabulary):
 	get_term_weight(unit, doc_vocabulary, ftu)
 
 '''	
-	
 
+def getTermFrequency(block, term):
+	count = 0
+	wordList = block.get_text().split()
+	for word in wordList:
+		if(word == term):
+			count += 1
+	
+	return count
+	
+def make_unit_vector(block_list, block, doc_vocabulary):
+	wordList = block.get_text().split()
+	unitVector = np.empty()
+	for word in wordList:
+		'''Calculate word weight in this contentblock'''
+		print('Calculating unit vector for word = {}'.format(word))
+		ftu = getTermFrequency(block, word)
+		nt = determineWordBlockFrequency(block_list, word)
+		N = len(block_list)
+		M = len(doc_vocabulary.keys())
+		numerator = getNumerator(ftu, N, nt)
+		denominator = getDenom(doc_vocabulary, N, nt)
+		unitVector.append(numerator/denominator)
+	
+	print('Unit vector = {}'.format(unitVector))
+
+def getNumerator(ftu, N, nt):
+	numerator = (ftu * math.log10(N/nt))
+	print('Numerator = {}'.format(numerator))
+	return numerator
+	
+def getDenom(doc_vocabulary, N, nt):
+	denom = 0
+	'''Returns the value of the key word which is its frequency in the document vocab'''
+	for word in doc_vocabulary.keys():
+		fru = doc_vocabulary.get(word) 
+		denom += math.pow((fru * math.log10(N/nt)), 2)
+		
+	denom = math.sqrt(denom)
+	print('Denominator = {}'.format(denom))
+	return denom
+	
+def determineWordBlockFrequency(block_list, term):
+	count = 0
+	for b in block_list:
+		if(checkBlockForWord(b, term)):
+			count += 1
+			
+	return count
+		
+
+def checkBlockForWord(block, term):
+	wordList = block.get_text().split()
+	for word in wordList:
+		if(word == term):
+			return True
+			
+	return False
 def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold):
 	#block_list = cbp(web_page)
 	block_list = retrieve_content_blocks(html)
@@ -83,6 +141,12 @@ def download_html(url):
 	html = response.read()	
 	return html
 
+	
+def getTopicVector(vocabulary):
+	model = Word2Vec(vocabulary, min_count=1, size=len(vocabulary))
+	print("Done setting up Word2Vec model...")
+	model['pokemon']
+	return "Done"
 '''
 Function: to perfor the core crawling
 Parameters:
@@ -108,10 +172,12 @@ def crawl(url_queue):
 	block_list = retrieve_content_blocks(html)
 	for b in block_list:
 		print(b.get_text())
-		print(b.get_text().split())
-		
+		'''print(b.get_text().split())'''
 		#print(b.getText())
 		print("-----------")
+		make_unit_vector(block_list, b, vocabulary)
+	
+	
 	
 	
 	'''
