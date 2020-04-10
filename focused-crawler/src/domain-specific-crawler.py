@@ -57,17 +57,17 @@ def getTermFrequency(block, term):
 	
 def make_unit_vector(block_list, block, doc_vocabulary):
 	wordList = block.get_text().split()
-	unitVector = []
+	unitVector = {}
 	for word in wordList:
 		'''Calculate word weight in this contentblock'''
 		print('Calculating unit vector for word = {}'.format(word))
 		ftu = getTermFrequency(block, word)
 		nt = determineWordBlockFrequency(block_list, word)
 		N = len(block_list)
-		M = len(doc_vocabulary.keys())
+		M = sum(doc_vocabulary.values())
 		numerator = getNumerator(ftu, N, nt)
 		denominator = getDenom(doc_vocabulary, N, nt)
-		unitVector.append(numerator/denominator)
+		unitVector[word] = numerator/denominator
 		
 	print('Unit vector = {}'.format(unitVector))
 	return unitVector 
@@ -180,8 +180,7 @@ def crawl(url_queue):
 		print("-----------")
 		unitVectorList.append(make_unit_vector(block_list, b, vocabulary))
 		'''unitVectorList should have the same exact size as block_list and contain the unit vector for each block so unitVectorList[3] will be the unit vector for block_list[3]'''
-	
-	
+	print(unitVectorList)
 	
 	'''
 	# TODO -- unknown
