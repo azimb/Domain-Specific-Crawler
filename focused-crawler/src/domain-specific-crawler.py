@@ -57,7 +57,7 @@ def getTermFrequency(block, term):
 	
 def make_unit_vector(block_list, block, doc_vocabulary):
 	wordList = block.get_text().split()
-	unitVector = np.empty()
+	unitVector = []
 	for word in wordList:
 		'''Calculate word weight in this contentblock'''
 		print('Calculating unit vector for word = {}'.format(word))
@@ -68,8 +68,10 @@ def make_unit_vector(block_list, block, doc_vocabulary):
 		numerator = getNumerator(ftu, N, nt)
 		denominator = getDenom(doc_vocabulary, N, nt)
 		unitVector.append(numerator/denominator)
-	
+		
 	print('Unit vector = {}'.format(unitVector))
+	return unitVector 
+
 
 def getNumerator(ftu, N, nt):
 	numerator = (ftu * math.log10(N/nt))
@@ -170,13 +172,14 @@ def crawl(url_queue):
 	
 	print("paragraphs")
 	block_list = retrieve_content_blocks(html)
-	for b in block_list:
+	unitVectorList = []
+	for index, b in enumerate(block_list):
 		print(b.get_text())
 		'''print(b.get_text().split())'''
 		#print(b.getText())
 		print("-----------")
-		make_unit_vector(block_list, b, vocabulary)
-	
+		unitVectorList.append(make_unit_vector(block_list, b, vocabulary))
+		'''unitVectorList should have the same exact size as block_list and contain the unit vector for each block so unitVectorList[3] will be the unit vector for block_list[3]'''
 	
 	
 	
@@ -201,6 +204,8 @@ def main():
 	url_queue = []
 	heapq.heapify(url_queue)
 	
+	topic = input("Please enter a domain/topic to search:\n")
+	print("Searching for webpages pertaining to {}.".format(topic))
 	# add seed with highest priority
 	seed = url = "http://kite.com"
 	seed = "https://en.wikipedia.org/wiki/Pok%C3%A9mon"
