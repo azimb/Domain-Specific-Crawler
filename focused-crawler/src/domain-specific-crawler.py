@@ -10,6 +10,7 @@ import nltk
 import math
 
 
+
 '''
 Normaloze terms
 '''
@@ -129,15 +130,27 @@ def checkBlockForWord(block, term):
 			return True
 			
 	return False
+	
+def similarity_cbp(unitVector, topicVector):
+	#(u*v)/|u|*|v|
+	return (np.matmul(unitVector, topicVector) / (unitVector.size * topicVector.size))
+	
 def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold):
 	#block_list = cbp(web_page)
 	block_list = retrieve_content_blocks(html)
 	for block in block_list:
-		block_vector = make_unit_vector(block, doc_vocabulary)
+		# hashmap
+		block_vector = make_unit_vector(block_list, block, doc_vocabulary)
+		if "pokemon" in block_vector: print( "weight of pokemon: ",  block_vector["pokemon"])
+		# actual vector
+		block_vector = convertToVector(block_vector, doc_vocabulary)
+		
 		s = similarity_cbp(block_vector, topic_vector)
 		
+		print("Similarity score: {}".format(s))
+		print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 		# relavant block (above threshold)
-		if s > threshold:
+		'''if s > threshold:
 			link_list = extract_links(block)
 			for link in link_list:
 				heapq.heappush(url_queue, (s, link))
@@ -151,9 +164,9 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold):
 				s = similarity_jfe(AT_vector, LC_vector)
 				
 				if s > threshold:
-					heapq.heappush(url_queue, (s, link))
+					heapq.heappush(url_queue, (s, link))'''
 	
-	return url_queue
+	#return url_queue
 		
 				
 '''
@@ -167,15 +180,30 @@ def download_html(url):
 	html = response.read()	
 	return html
 
+def convertToVector(unitMap, vocab):
+	unitVector = []
+	for word in vocab: 
+		if word not in unitMap: unitVector.append(0)
+		else: unitVector.append( unitMap[word] )
+	return np.array(unitVector)
 	
 	
+def make_topic_vector(vocabulary, topic):
+	topic_vector = []
+	topic_array = topic.split()
+	for v in vocabulary:
+		if v in topic_array: topic_vector.append(1)
+		else: topic_vector.append(0)
+	
+	return np.array(topic_vector)
+
 '''
 Function: to perfor the core crawling
 Parameters:
 	url_queue -- type: priority queue
 
 '''
-def crawl(url_queue):
+def crawl(url_queue, topic):
 
 	# Step 1:  Dequeues the next URL
 	pair = heapq.heappop(url_queue)
@@ -186,31 +214,20 @@ def crawl(url_queue):
 
 	vocabulary = get_vocab(html)
 	
-	topic_vector = ?
-	threshold = ?
+	topic_vector = make_topic_vector(vocabulary, topic)
+	threshold = 0
 	
-	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
-	
-	
-	
-	#print("paragraphs")
-	block_list = retrieve_content_blocks(html)
-	unitVectorList = []
-	for index, b in enumerate(block_list):
-		#print(b.get_text())
-		'''print(b.get_text().split())'''
-		#print(b.getText())
-		#print("-----------")
-		unitVectorList.append(make_unit_vector(block_list, b, vocabulary))
-		'''unitVectorList should have the same exact size as block_list and contain the unit vector for each block so unitVectorList[3] will be the unit vector for block_list[3]'''
-	print(unitVectorList)
+	#print("topic vector: ")
+	#print(topic_vector)
+	#print("Topic vector size: {}".format(len(topic_vector)))
+	#print("Vocabulary size: {}".format(len(vocabulary)))
+	for word in vocabulary: 
+		#print("First word in vocab: {}".format(word))
+		break
+	#url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
+	lpe(url_queue, html, topic_vector, vocabulary, threshold)
 	
 	'''
-	# TODO -- unknown
-	topic_vector = ?
-	threshold = ?
-	
-	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
 	crawl(url_queue)
 	'''
 
@@ -228,6 +245,6 @@ def main():
 	heapq.heappush(url_queue, (1.0, seed))
 	
 	
-	crawl(url_queue)
+	crawl(url_queue, topic)
 	
 main()
