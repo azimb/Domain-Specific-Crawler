@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 '''
-Normaloze terms
+Normalize terms
 '''
 
 CLEAN_CHARS = ['+', '=', '^', '*', '~', '#', '_', '\\']
@@ -75,12 +75,6 @@ def make_unit_vector(block_list, block, doc_vocabulary):
 	
 	for word in wordList:
 		'''Calculate word weight in this contentblock'''
-		#print('Calculating unit vector for word = {}'.format(word))
-		'''
-		word = unidecode.unidecode(word)
-		word = word.lower()
-		word = lemmatizer.lemmatize(word)
-		'''
 		
 		word = normalize(word)
 		
@@ -139,19 +133,17 @@ def similarity_cbp(unitVector, topicVector):
 	
 	
 def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
-
-	#block_list = cbp(web_page)
+	print("Running LPE algorithm on ", url)
 	block_list = retrieve_content_blocks(html)
-	
 	sim = []
-	
 	most_relavant = []
 	heapq.heapify(most_relavant)
 	
 	for block in block_list:
+		print("Handling content block...")
 		# hashmap
 		block_vector = make_unit_vector(block_list, block, doc_vocabulary)
-		if "pokemon" in block_vector: print( "weight of pokemon: ",  block_vector["pokemon"])
+		#if "pokemon" in block_vector: print( "weight of pokemon: ",  block_vector["pokemon"])
 		# actual vector
 		block_vector = convertToVector(block_vector, doc_vocabulary)
 		
@@ -159,15 +151,15 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 		
 		sim.append(s)
 		
-		print("Similarity score: {}".format(s))
-		print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+		#print("Similarity score: {}".format(s))
+		#print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 		# relavant block (above threshold)
 		
 		
 		link_list = extract_links(url, block)
-		
 		heapq.heappush(most_relavant, (-s, link_list))
 		
+		print("Done, moving onto next content block...")
 		
 		'''
 		if s > threshold:
@@ -202,22 +194,20 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 	#plt.show()
 	
 	
-	# CHECK
 	# grab the best 5 paragraphs
 	count = 1
 	while most_relavant:
 		pair = heapq.heappop(most_relavant)
 		score, links = pair[0], pair[1]
-		for link in link_list:
-			heapq.heappush(url_queue, (score, link))
-		count += 1
+		for link in links:
+			if "cite_note" not in link:
+				heapq.heappush(url_queue, (score, link))
+		count += 1		
 		if count == 5: break
 	
-	
-	print("url queue: ", url_queue)
-	
-	heapq.heappush(url_queue, (s, link))
-		
+	#heapq.heappush(url_queue, (s, link))
+	print("Done running LPE algorithm on", url)
+	return url_queue
 				
 '''
 Function: visit the URL, and download HTML
@@ -258,6 +248,7 @@ def crawl(url_queue, topic):
 	# Step 1:  Dequeues the next URL
 	pair = heapq.heappop(url_queue)
 	priority, url = -(pair[0]), pair[1]
+	print("Crawling ", url)
 	
 	# Step 2: Fetch the HTML of the url
 	html = download_html(url)
@@ -271,13 +262,20 @@ def crawl(url_queue, topic):
 	#print(topic_vector)
 	#print("Topic vector size: {}".format(len(topic_vector)))
 	#print("Vocabulary size: {}".format(len(vocabulary)))
-	#url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
-	lpe(url_queue, html, topic_vector, vocabulary, threshold, url)
-	
+	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold, url)
+	print("url queue: ", url_queue)
 	'''
 	crawl(url_queue)
 	'''
 
+def checkIfSiteExists(url):
+	req = urllib.request.Request(url)
+	try: 
+		urllib.request.urlopen(req)
+	except urllib.error.HTTPError as e:
+		print(e.code)
+		return False
+	return True
 
 def main():
 	# initialize empty priority queue
@@ -285,14 +283,21 @@ def main():
 	heapq.heapify(url_queue)
 	
 	topic = input("Please enter a domain/topic to search:\n")
-	print("Searching for webpages pertaining to {}.".format(topic))
+	
 	# add seed with highest priority
 	#z = “In the basket are %s and %s” % (x,y)
 	seed = url = "http://kite.com"
-	seed = "https://en.wikipedia.org/wiki/Pok%C3%A9mon"
-	heapq.heappush(url_queue, (1.0, seed))
+	seed = "https://en.wikipedia.org/wiki/"
+	seed = "".join((seed, topic))
 	
-	
-	crawl(url_queue, topic)
-	
+	valid=checkIfSiteExists(seed) #need to make a function that tries to connect, if a connection is possible continue.
+	if valid==True:
+		print("Searching for webpages pertaining to {}.".format(topic))
+		heapq.heappush(url_queue, (1.0, seed))
+		crawl(url_queue, topic)
+	else:
+		print("Invalid url, please enter a valid domain.")
+		main()
+
+		
 main()
