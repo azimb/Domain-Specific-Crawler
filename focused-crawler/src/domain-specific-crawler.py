@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import urllib.request
 from vocab import *
+from utilities import * 
 import numpy as np
 import re
 from unidecode import unidecode
@@ -8,6 +9,7 @@ import requests
 import heapq
 import nltk 
 import math
+import matplotlib.pyplot as plt	
 
 
 '''
@@ -51,7 +53,7 @@ def normalize(s):
 
 
 
-def getTermFrequency(block, term, wordList):
+def getTermFrequency(term, wordList):
 	count = 0
 	#wordList = block.get_text().split()
 	for word in wordList:
@@ -81,10 +83,10 @@ def make_unit_vector(block_list, block, doc_vocabulary):
 		
 		word = normalize(word)
 		
-		ftu = getTermFrequency(block, word, wordList)
+		ftu = getTermFrequency(word, wordList)
 		nt = determineWordBlockFrequency(block_list, word)
 		N = len(block_list)
-		M = sum(doc_vocabulary.values())
+		
 		numerator = getNumerator(ftu, N, nt)
 		denominator = getDenom(doc_vocabulary, N, nt)
 		unitVector[word] = numerator/denominator
@@ -129,14 +131,49 @@ def checkBlockForWord(block, term):
 			return True
 			
 	return False
-def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold):
+	
+def similarity_cbp(unitVector, topicVector):
+	#(u*v)/|u|*|v|
+	return (np.matmul(unitVector, topicVector) / (unitVector.size * topicVector.size))
+	
+	
+def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 	#block_list = cbp(web_page)
 	block_list = retrieve_content_blocks(html)
+	
+	sim = []
+	
+	most_relavant = []
+	heapq.heapify(most_relavant)
+	
 	for block in block_list:
-		block_vector = make_unit_vector(block, doc_vocabulary)
+		# hashmap
+		block_vector = make_unit_vector(block_list, block, doc_vocabulary)
+		if "pokemon" in block_vector: print( "weight of pokemon: ",  block_vector["pokemon"])
+		# actual vector
+		block_vector = convertToVector(block_vector, doc_vocabulary)
+		
 		s = similarity_cbp(block_vector, topic_vector)
 		
+		sim.append(s)
+		
+		print("Similarity score: {}".format(s))
+		print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 		# relavant block (above threshold)
+		
+		
+		link_list = extract_links(url, block)
+		
+		heapq.heappush(most_relavant, (-s, link_list))
+		
+		
+		'''
+		if s > threshold:
+			link_list = extract_links(url, block)
+			for link in link_list:
+				heapq.heappush(url_queue, (-s, link))
+		
+		
 		if s > threshold:
 			link_list = extract_links(block)
 			for link in link_list:
@@ -151,9 +188,30 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold):
 				s = similarity_jfe(AT_vector, LC_vector)
 				
 				if s > threshold:
-					heapq.heappush(url_queue, (s, link))
+				
+				
+					heapq.heappush(url_queue, (s, link))'''
+	#x = [ i for i in range(len(sim)) ]
 	
-	return url_queue
+	#plt.plot[x,sim]
+	#plt.show()
+	
+	
+	# CHECK
+	# grab the best 5 paragraphs
+	count = 1
+	while most_relavant:
+		pair = heapq.heappop(most_relavant)
+		score, links = pair[0], pair[1]
+		for link in link_list:
+			heapq.heappush(url_queue, (score, link))
+		count += 1
+		if count == 5: break
+	
+	
+	print("url queue: ", url_queue)
+	
+	#return url_queue
 		
 				
 '''
@@ -167,50 +225,55 @@ def download_html(url):
 	html = response.read()	
 	return html
 
+def convertToVector(unitMap, vocab):
+	unitVector = []
+	for word in vocab: 
+		if word not in unitMap: unitVector.append(0)
+		else: unitVector.append( unitMap[word] )
+	return np.array(unitVector)
 	
 	
+def make_topic_vector(vocabulary, topic):
+	topic_vector = []
+	topic_array = topic.split()
+	for v in vocabulary:
+		if v in topic_array: topic_vector.append(1)
+		else: topic_vector.append(0)
+	
+	return np.array(topic_vector)
+
 '''
 Function: to perfor the core crawling
 Parameters:
 	url_queue -- type: priority queue
 
 '''
-def crawl(url_queue):
+def crawl(url_queue, topic):
 
 	# Step 1:  Dequeues the next URL
 	pair = heapq.heappop(url_queue)
-	priority, url = pair[0], pair[1]
+	priority, url = -(pair[0]), pair[1]
 	
 	# Step 2: Fetch the HTML of the url
 	html = download_html(url)
 
 	vocabulary = get_vocab(html)
+	M = sum(vocabulary.values())
+	topic_vector = make_topic_vector(vocabulary, topic)
+	threshold = 0
 	
-	topic_vector = ?
-	threshold = ?
+	#print("topic vector: ")
+	#print(topic_vector)
+	#print("Topic vector size: {}".format(len(topic_vector)))
+	#print("Vocabulary size: {}".format(len(vocabulary)))
+	#url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
+	lpe(url_queue, html, topic_vector, vocabulary, threshold, url)
 	
-	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
 	
 	
 	
-	#print("paragraphs")
-	block_list = retrieve_content_blocks(html)
-	unitVectorList = []
-	for index, b in enumerate(block_list):
-		#print(b.get_text())
-		'''print(b.get_text().split())'''
-		#print(b.getText())
-		#print("-----------")
-		unitVectorList.append(make_unit_vector(block_list, b, vocabulary))
-		'''unitVectorList should have the same exact size as block_list and contain the unit vector for each block so unitVectorList[3] will be the unit vector for block_list[3]'''
-	print(unitVectorList)
 	
 	'''
-	# TODO -- unknown
-	topic_vector = ?
-	threshold = ?
-	
-	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
 	crawl(url_queue)
 	'''
 
@@ -223,11 +286,12 @@ def main():
 	topic = input("Please enter a domain/topic to search:\n")
 	print("Searching for webpages pertaining to {}.".format(topic))
 	# add seed with highest priority
+	#z = “In the basket are %s and %s” % (x,y)
 	seed = url = "http://kite.com"
 	seed = "https://en.wikipedia.org/wiki/Pok%C3%A9mon"
 	heapq.heappush(url_queue, (1.0, seed))
 	
 	
-	crawl(url_queue)
+	crawl(url_queue, topic)
 	
 main()

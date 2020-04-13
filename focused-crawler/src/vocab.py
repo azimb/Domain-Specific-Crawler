@@ -7,6 +7,7 @@ import unidecode
 import nltk
 from nltk.stem import WordNetLemmatizer
 import re
+from collections import OrderedDict
 
 def tag_visible(element):
     if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
@@ -33,8 +34,8 @@ def get_pairs(html):
 		elem = lemmatizer.lemmatize(elem)
 		if elem not in occs: occs[elem] = 1
 		else: occs[elem] = occs[elem] + 1
-	
-	return occs
+	orderedDict = OrderedDict(occs)
+	return orderedDict
 
 
 '''
