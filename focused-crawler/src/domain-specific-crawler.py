@@ -12,6 +12,7 @@ import math
 import matplotlib.pyplot as plt	
 
 
+
 '''
 Normaloze terms
 '''
@@ -138,6 +139,7 @@ def similarity_cbp(unitVector, topicVector):
 	
 	
 def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
+
 	#block_list = cbp(web_page)
 	block_list = retrieve_content_blocks(html)
 	
@@ -175,6 +177,11 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 		
 		
 		if s > threshold:
+		print("Similarity score: {}".format(s))
+		print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+		# relavant block (above threshold)
+		
+		if s > threshold:
 			link_list = extract_links(block)
 			for link in link_list:
 				heapq.heappush(url_queue, (s, link))
@@ -188,9 +195,7 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 				s = similarity_jfe(AT_vector, LC_vector)
 				
 				if s > threshold:
-				
-				
-					heapq.heappush(url_queue, (s, link))'''
+				''' 
 	#x = [ i for i in range(len(sim)) ]
 	
 	#plt.plot[x,sim]
@@ -211,7 +216,7 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 	
 	print("url queue: ", url_queue)
 	
-	#return url_queue
+	heapq.heappush(url_queue, (s, link))
 		
 				
 '''
@@ -232,7 +237,6 @@ def convertToVector(unitMap, vocab):
 		else: unitVector.append( unitMap[word] )
 	return np.array(unitVector)
 	
-	
 def make_topic_vector(vocabulary, topic):
 	topic_vector = []
 	topic_array = topic.split()
@@ -240,6 +244,7 @@ def make_topic_vector(vocabulary, topic):
 		if v in topic_array: topic_vector.append(1)
 		else: topic_vector.append(0)
 	
+
 	return np.array(topic_vector)
 
 '''
@@ -268,10 +273,6 @@ def crawl(url_queue, topic):
 	#print("Vocabulary size: {}".format(len(vocabulary)))
 	#url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold)
 	lpe(url_queue, html, topic_vector, vocabulary, threshold, url)
-	
-	
-	
-	
 	
 	'''
 	crawl(url_queue)
