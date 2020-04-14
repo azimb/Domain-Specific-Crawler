@@ -313,3 +313,5 @@ def main():
 	
 crawled_urls = []
 main()
+print("crawled urls: ")
+for cu in crawled_urls: print(cu)
