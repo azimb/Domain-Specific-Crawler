@@ -200,8 +200,7 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, threshold, url):
 		pair = heapq.heappop(most_relavant)
 		score, links = pair[0], pair[1]
 		for link in links:
-			if "cite_note" not in link:
-				heapq.heappush(url_queue, (score, link))
+			if "cite_note" not in link: heapq.heappush(url_queue, (score, link))
 		count += 1		
 		if count == 5: break
 	
@@ -243,12 +242,22 @@ Parameters:
 	url_queue -- type: priority queue
 
 '''
-def crawl(url_queue, topic):
+def crawl(url_queue, topic, iteration, num_pages):
 
+	# check if we have crawled enough pages
+	if iteration == num_pages or not url_queue:
+		print("Crawl complete.")
+		return
+			
+			
+			
 	# Step 1:  Dequeues the next URL
 	pair = heapq.heappop(url_queue)
 	priority, url = -(pair[0]), pair[1]
 	print("Crawling ", url)
+	
+	crawled_urls.append(url)
+	
 	
 	# Step 2: Fetch the HTML of the url
 	html = download_html(url)
@@ -263,10 +272,10 @@ def crawl(url_queue, topic):
 	#print("Topic vector size: {}".format(len(topic_vector)))
 	#print("Vocabulary size: {}".format(len(vocabulary)))
 	url_queue = lpe(url_queue, html, topic_vector, vocabulary, threshold, url)
-	print("url queue: ", url_queue)
-	'''
-	crawl(url_queue)
-	'''
+	#print("url queue: ", url_queue)
+	
+	crawl(url_queue, topic, iteration + 1, num_pages)
+	
 
 def checkIfSiteExists(url):
 	req = urllib.request.Request(url)
@@ -284,9 +293,10 @@ def main():
 	
 	topic = input("Please enter a domain/topic to search:\n")
 	
+	num_pages = int(input("How many pages would you like to crawl: "))
+	
 	# add seed with highest priority
 	#z = “In the basket are %s and %s” % (x,y)
-	seed = url = "http://kite.com"
 	seed = "https://en.wikipedia.org/wiki/"
 	seed = "".join((seed, topic))
 	
@@ -294,10 +304,12 @@ def main():
 	if valid==True:
 		print("Searching for webpages pertaining to {}.".format(topic))
 		heapq.heappush(url_queue, (1.0, seed))
-		crawl(url_queue, topic)
+		iteration = 0
+		crawl(url_queue, topic, iteration, num_pages)
 	else:
 		print("Invalid url, please enter a valid domain.")
 		main()
 
-		
+	
+crawled_urls = []
 main()
