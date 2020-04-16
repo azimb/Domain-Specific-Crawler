@@ -33,9 +33,6 @@ def normalize(s):
 	lemmatizer = WordNetLemmatizer()
 	s = lemmatizer.lemmatize(s)
 	
-	'''
-	Normalize string by removing punctuation, capitalization, diacritics.
-	'''
 	# Replace diactritics
 	s = unidecode(s)
 	# Remove unwanted characters
@@ -54,7 +51,6 @@ def normalize(s):
 
 def getTermFrequency(term, wordList):
 	count = 0
-	#wordList = block.get_text().split()
 	for word in wordList:
 	
 		# normalize
@@ -76,7 +72,6 @@ def make_unit_vector(block_list, block, doc_vocabulary):
 	wordListMap = Counter(wordList)
 	
 	for word in wordList:
-		'''Calculate word weight in this contentblock'''
 		
 		word = normalize(word)
 		
@@ -88,24 +83,21 @@ def make_unit_vector(block_list, block, doc_vocabulary):
 		denominator = getDenom(wordListMap, N, nt)
 		unitVector[word] = numerator/denominator
 		
-	#print('Unit vector = {}'.format(unitVector))
 	return unitVector 
 
 
 def getNumerator(ftu, N, nt):
 	numerator = (ftu * math.log10(N/nt))
-	#print('Numerator = {}'.format(numerator))
 	return numerator
 	
 def getDenom(wordListMap, N, nt):
 	denom = 0
-	'''Returns the value of the key word which is its frequency in the document vocab'''
+	
 	for word in wordListMap.keys():
 		fru = wordListMap.get(word) 
 		denom += math.pow((fru * math.log10(N/nt)), 2)
 		
 	denom = math.sqrt(denom)
-	#print('Denominator = {}'.format(denom))
 	return denom
 	
 def determineWordBlockFrequency(block_list, term):
@@ -135,7 +127,6 @@ def similarity_cbp(unitVector, topicVector):
 	
 	
 def lpe(url_queue, html, topic_vector, doc_vocabulary, url):
-	#print("Running LPE algorithm on ", url)
 	block_list = retrieve_content_blocks(html)
 	sim = []
 	average_document_score = 0
@@ -145,10 +136,9 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, url):
 	heapq.heapify(most_relavant_p)
 	
 	for block in block_list:
-		#print("Handling content block...")
 		# hashmap
 		block_vector = make_unit_vector(block_list, block, doc_vocabulary)
-		#if "pokemon" in block_vector: print( "weight of pokemon: ",  block_vector["pokemon"])
+
 		# actual vector
 		block_vector = convertToVector(block_vector, doc_vocabulary)
 		
@@ -156,22 +146,16 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, url):
 		average_document_score += s
 		sim.append(s)
 		
-		#print("Paragraph: ", block.get_text())
-		#print("Similarity score: {}".format(s))
-		#print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-		
-		
 		link_list = extract_links(url, block)
 		
 		heapq.heappush(most_relavant, (-s, link_list))
 		heapq.heappush(most_relavant_p, (-s, block.get_text()))
 		
-		#print("Done, moving onto next content block...")
+
 		
 	average_document_score = average_document_score/len(sim)
-	#print("Average document score = ", average_document_score)
+	
 	if(average_document_score <= 0):
-		#print("Document at url {} found to not be relevant.".format(url))
 		return url_queue
 	else: 
 		indexed_crawled_urls.append(url)
@@ -186,18 +170,8 @@ def lpe(url_queue, html, topic_vector, doc_vocabulary, url):
 		count += 1		
 		if count == 5: break
 		
-	#print("most relavant para")
-	#print(heapq.heappop(most_relavant_p)[1])
-
-	#print("Done running LPE algorithm on", url)
 	return url_queue
 				
-'''
-Function: visit the URL, and download HTML
-Parameters:
-	- url
-Returns: html page
-'''
 def download_html(url):
 	response = urllib.request.urlopen(url)
 	html = response.read()	
@@ -220,26 +194,17 @@ def make_topic_vector(vocabulary, topic):
 
 	return np.array(topic_vector)
 
-'''
-Function: to perfor the core crawling
-Parameters:
-	url_queue -- type: priority queue
-
-'''
 def crawl(url_queue, topic, num_pages):
 
 	# check if we have crawled enough pages
 	if  len(indexed_crawled_urls) == num_pages or not url_queue:
 		print("Crawl complete.")
 		return
-			
-			
-			
+					
 	# Step 1:  Dequeues the next URL
 	pair = heapq.heappop(url_queue)
 	priority, url = -(pair[0]), pair[1]
 	print("Crawling ", url)
-	
 	
 	# Step 2: Fetch the HTML of the url
 	html = download_html(url)
@@ -248,12 +213,7 @@ def crawl(url_queue, topic, num_pages):
 	M = sum(vocabulary.values())
 	topic_vector = make_topic_vector(vocabulary, topic)
 	
-	#print("topic vector: ")
-	#print(topic_vector)
-	#print("Topic vector size: {}".format(len(topic_vector)))
-	#print("Vocabulary size: {}".format(len(vocabulary)))
 	url_queue = lpe(url_queue, html, topic_vector, vocabulary, url)
-	#print("url queue: ", url_queue)
 	
 	crawl(url_queue, topic, num_pages)
 	
@@ -288,7 +248,7 @@ def main():
 	seed = "https://en.wikipedia.org/wiki/"
 	seed = "".join((seed, topic))
 	alternativeSeed = "www." + topic + ".com"
-	valid=checkIfSiteExists(seed) #need to make a function that tries to connect, if a connection is possible continue.
+	valid=checkIfSiteExists(seed)
 	if valid==True:
 		print("Searching for webpages pertaining to {}.".format(topic))
 		heapq.heappush(url_queue, (1.0, seed))

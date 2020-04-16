@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 def construct_url(parent_url, incomplete_url):
 	
-	# from urlparse import urlparse  # Python 2
 	parsed_uri = urlparse(parent_url)
 	result = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
 	result = result[:-1]

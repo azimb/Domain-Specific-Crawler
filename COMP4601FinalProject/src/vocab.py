@@ -37,19 +37,12 @@ def get_pairs(html):
 	orderedDict = OrderedDict(occs)
 	return orderedDict
 
-
-'''
-Retrieves all paragraph tags from the html document
-'''
 def retrieve_content_blocks(html): 
 	paragraphs = []
 	soup = BeautifulSoup(html, "html.parser")
 	for p in soup.find_all('p'): paragraphs.append(p)
 	return paragraphs
 	
-'''
-Grabs all the unique terms from the document and constructs a vocabulary of the form (word, frequency)
-'''
 def make_vocab(html):
 	vocab = set([])
 	
@@ -60,15 +53,7 @@ def make_vocab(html):
 	
 	return list(vocab)
 
-
-# the "main method"	
 def get_vocab(html):
 	hashmap = get_pairs(html)
 	return hashmap
 
-
-seed = "https://en.wikipedia.org/wiki/Pok%C3%A9mon"
-response = urllib.request.urlopen(seed)
-html = response.read()
-nltk.download('wordnet')
-get_vocab(html)
